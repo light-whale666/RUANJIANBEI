@@ -1,0 +1,24 @@
+{
+  "name": "campus-assistant-admin",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "校园办事与入学助手 · 管理后台（Vue 3 + Vite + Element Plus）",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --base /admin/"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "axios": "^1.13.2",
+    "element-plus": "^2.11.7",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.22",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "vite": "^7.2.2"
+  }
+}

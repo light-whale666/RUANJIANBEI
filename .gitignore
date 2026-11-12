@@ -1,0 +1,39 @@
+# secrets
+.env
+.env.*.local
+*.local
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+node_modules/
+
+# Flutter / Android / iOS
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+**/local.properties
+*.iml
+.idea/
+**/.gradle/
+**/captures/
+**/ios/Flutter/ephemeral/
+**/ios/Pods/
+**/.DS_Store
+
+# Built packages (too large for git; use a Release instead)
+dist/
+*.apk
+*.ipa
+*.aab
+
+# Editor
+.vscode/

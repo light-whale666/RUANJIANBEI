@@ -1,0 +1,4 @@
+username,password,name,role,student_no,staff_no,college,major,grade,class_name,phone,email,counselor_username,dorm,bed
+stu_zhangsan,,张三,student,2026010101,,计算机学院,软件工程,2026,软件2601,13800000001,zhangsan@example.edu,counselor_li,1号楼,301-1
+teacher_wang,,王老师,teacher,,T1001,计算机学院,软件工程,,,,,wang@example.edu,,
+counselor_li,,李辅导员,counselor,,C2001,计算机学院,,,,,,,,li@example.edu,,
