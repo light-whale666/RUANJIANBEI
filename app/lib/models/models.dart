@@ -364,6 +364,97 @@ class SlotNeed {
       );
 }
 
+class DecisionStep {
+  const DecisionStep({
+    required this.id,
+    required this.action,
+    required this.reason,
+    this.evidence = const [],
+  });
+
+  final String id;
+  final String action;
+  final String reason;
+  final List<String> evidence;
+
+  factory DecisionStep.fromJson(Map<String, dynamic> j) => DecisionStep(
+        id: asStringD(j['id']),
+        action: asStringD(j['action']),
+        reason: asStringD(j['reason']),
+        evidence: asStringList(j['evidence']),
+      );
+}
+
+class PrefillTrace {
+  const PrefillTrace({this.used = const [], this.skippedUnauthorized = const []});
+
+  final List<String> used;
+  final List<String> skippedUnauthorized;
+
+  factory PrefillTrace.fromJson(Map<String, dynamic> j) => PrefillTrace(
+        used: asStringList(j['used']),
+        skippedUnauthorized: asStringList(firstNonNull(j, ['skipped_unauthorized', 'skippedUnauthorized'])),
+      );
+}
+
+class DecisionTrace {
+  const DecisionTrace({
+    required this.path,
+    this.intent,
+    this.confidence = 0,
+    this.uncertain = false,
+    this.source,
+    this.steps = const [],
+    this.whyConfirm,
+    this.awaiting,
+    this.knowledgeScope = const [],
+    this.prefill = const PrefillTrace(),
+  });
+
+  final String path;
+  final String? intent;
+  final double confidence;
+  final bool uncertain;
+  final String? source;
+  final List<DecisionStep> steps;
+  final String? whyConfirm;
+  final String? awaiting;
+  final List<String> knowledgeScope;
+  final PrefillTrace prefill;
+
+  String get sourceLabel {
+    if (source == 'llm') return '大模型';
+    if (source == 'rules') return '规则兜底';
+    return source ?? '未知';
+  }
+
+  String get awaitingLabel {
+    switch (awaiting) {
+      case 'student_confirm':
+        return '等待学生确认';
+      case 'teacher_approval':
+        return '等待教师/辅导员审批';
+      case 'clarification':
+        return '等待补充说明';
+      default:
+        return '无需等待确认';
+    }
+  }
+
+  factory DecisionTrace.fromJson(Map<String, dynamic> j) => DecisionTrace(
+        path: asStringD(j['path']),
+        intent: asString(j['intent']),
+        confidence: (j['confidence'] is num) ? (j['confidence'] as num).toDouble() : double.tryParse('${j['confidence']}') ?? 0,
+        uncertain: asBool(j['uncertain']),
+        source: asString(j['source']),
+        steps: asObjList(j['steps'], DecisionStep.fromJson),
+        whyConfirm: asString(firstNonNull(j, ['why_confirm', 'whyConfirm'])),
+        awaiting: asString(j['awaiting']),
+        knowledgeScope: asStringList(firstNonNull(j, ['knowledge_scope', 'knowledgeScope'])),
+        prefill: asObj(j['prefill'], PrefillTrace.fromJson) ?? const PrefillTrace(),
+      );
+}
+
 class AskResult {
   const AskResult({
     required this.conversationId,
@@ -375,6 +466,7 @@ class AskResult {
     this.humanEntry,
     this.permissionDenied = false,
     this.slotsNeeded = const [],
+    this.decision,
   });
 
   final String conversationId;
@@ -386,6 +478,7 @@ class AskResult {
   final HumanEntry? humanEntry;
   final bool permissionDenied;
   final List<SlotNeed> slotsNeeded;
+  final DecisionTrace? decision;
 
   factory AskResult.fromJson(Map<String, dynamic> j) {
     final answer = asMap(firstNonNull(j, ['answer']) ?? j);
@@ -399,6 +492,7 @@ class AskResult {
       humanEntry: asObj(answer['human_entry'] ?? answer['humanEntry'], HumanEntry.fromJson),
       permissionDenied: asBool(answer['permission_denied']),
       slotsNeeded: asObjList(j['slots_needed'] ?? answer['slots_needed'], SlotNeed.fromJson),
+      decision: asObj(j['decision'] ?? answer['decision'], DecisionTrace.fromJson),
     );
   }
 }

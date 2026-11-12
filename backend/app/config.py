@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     minio_root_password: str | None = None
     minio_bucket: str = "campus-assistant"
     minio_secure: bool = False
+    # Optional LLM for supervisor routing only. Empty/missing key → rule fallback.
+    # Knowledge text still comes only from retrieved chunks; the model must not invent clauses.
     llm_api_key: str | None = None
     llm_base_url: str | None = None
     llm_model: str = "deepseek-chat"

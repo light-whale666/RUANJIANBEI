@@ -79,8 +79,8 @@ class DemoCampusApi implements CampusApi {
       TodoItem(
         id: 'td_enroll_read',
         type: 'registration',
-        title: '阅读《2026级新生入学须知》并确认',
-        subtitle: '11月15日前完成',
+        title: '确认报到安排',
+        subtitle: '11月15日前完成辅导员发布的报到任务',
         dueAt: DateTime(2026, 11, 15),
         group: 'enrollment',
         actionLabel: '去完成',
@@ -128,8 +128,8 @@ class DemoCampusApi implements CampusApi {
       const ReminderItem(
         id: 'rm_enroll',
         category: 'deadline',
-        title: '入学须知确认将于 11 月 15 日截止',
-        body: '未完成关键报到项将由辅导员跟进。',
+        title: '报到任务将于 11 月 15 日截止',
+        body: '未完成的报到任务将由辅导员跟进。任务说明不代替校方正式须知。',
         citations: [citeEnroll],
         action: AnswerAction(type: 'task', label: '去完成', ref: {'id': 'task_enroll_read'}),
       ),
@@ -150,8 +150,8 @@ class DemoCampusApi implements CampusApi {
     _tasks['task_enroll_read'] = TaskItem(
       id: 'task_enroll_read',
       type: 'registration',
-      title: '阅读《2026级新生入学须知》并确认',
-      body: '请阅读入学须知相关条款后确认已了解报到安排。',
+      title: '确认报到安排',
+      body: '请按辅导员发布的报到任务完成档案与床位确认。任务说明不代替校方正式须知。',
       dueAt: DateTime(2026, 11, 15),
       submitMode: 'confirm',
       citations: [citeEnroll],
@@ -511,25 +511,79 @@ class DemoCampusApi implements CampusApi {
         conclusion: '该规定需辅导员查看。系统不会展示无权限正文，也不会以打码方式泄露条款。',
         permissionDenied: true,
         humanEntry: const HumanEntry(type: 'counselor', label: '转给辅导员'),
+        decision: demoDecision(
+          path: 'knowledge.retrieve',
+          intent: 'knowledge',
+          knowledgeScope: const ['counselor-manual'],
+          steps: const [
+            DecisionStep(id: 'guard.no_invention', action: 'require_retrieval_evidence', reason: '命中仅辅导员可见的模板示例，对学生只提示需辅导员查看，不返回正文。', evidence: []),
+          ],
+        ),
       );
     }
 
     if (lower.contains('励志') || lower.contains('奖学金') || lower.contains('奖助')) {
       if (_user.id == 'stu_liu') {
-        return const AskResult(
+        return AskResult(
           conversationId: 'conv_aid',
           intent: 'aid',
-          conclusion: '根据已授权的成绩与困难认定，你可能符合国家励志奖学金申请条件。系统只做预审提醒，不会自动提交。',
+          conclusion: '根据已授权的成绩与困难认定，预审显示你可能符合国家励志奖学金申请条件。匹配依据是项目字段条件，不是编造的校规条款。系统只做预审提醒，不会自动提交，请你确认后再生成草稿。',
           citations: [citeAid],
           action: AnswerAction(type: 'aid', label: '查看并生成草稿', ref: {'id': 'aid_lizhi'}),
+          decision: demoDecision(
+            path: 'aid.preview',
+            intent: 'aid',
+            whyConfirm: whyAidConfirm,
+            awaiting: 'student_confirm',
+            knowledgeScope: const ['aid'],
+            used: const ['grades', 'hardship'],
+            steps: const [
+              DecisionStep(id: 'extract_signals', action: 'extract_signals', reason: '命中奖助词项和“我能申请/符合吗”类预审问句。', evidence: ['励志', '奖学金']),
+              DecisionStep(id: 'decide.select', action: 'select_path', reason: '采用奖助预审路径 aid.preview。', evidence: ['aid:0.82']),
+              DecisionStep(id: 'guard.student_confirm', action: 'require_student_confirm', reason: whyAidConfirm, evidence: []),
+            ],
+          ),
         );
       }
-      return const AskResult(
+      return AskResult(
         conversationId: 'conv_aid_no',
         intent: 'aid',
-        conclusion: '按《本科生国家励志奖学金评审办法》第四条，申请需上一学年成绩位于本专业前30%，并完成家庭经济困难认定。当前档案尚未满足或未完成必要授权，暂不推送资格提醒。完成成绩与困难认定授权后可重新预审。',
+        conclusion: '按当前项目条件预审，暂不符合或尚未完成必要授权，因此不推送资格提醒。系统不会编造校规条款。完成成绩与困难认定授权后可重新预审。',
         citations: [citeAid],
         humanEntry: HumanEntry(type: 'counselor', label: '问辅导员'),
+        decision: demoDecision(
+          path: 'aid.preview',
+          intent: 'aid',
+          whyConfirm: whyAidConfirm,
+          awaiting: 'student_confirm',
+          knowledgeScope: const ['aid'],
+          skipped: const ['grades', 'hardship'],
+          steps: const [
+            DecisionStep(id: 'extract_signals', action: 'extract_signals', reason: '命中奖助词项，走预审路径。', evidence: ['奖学金']),
+            DecisionStep(id: 'guard.student_confirm', action: 'require_student_confirm', reason: whyAidConfirm, evidence: []),
+          ],
+        ),
+      );
+    }
+
+    if (lower.contains('那个事情') || lower.contains('帮我处理一下') || lower == '那个' || lower == '你好' || lower == '在吗') {
+      return AskResult(
+        conversationId: _id('conv'),
+        intent: 'knowledge',
+        conclusion: '目前还不能判断你要查阅规定、请假、奖助还是报到，所以没有改动任何学生数据。请补充后再问一次。系统不会编造条款。',
+        humanEntry: const HumanEntry(type: 'counselor', label: '转给辅导员'),
+        slotsNeeded: const [SlotNeed(field: 'clarification', question: '请补充你想办理的事项，例如请假、奖助预审、报到还是查阅规定。')],
+        decision: demoDecision(
+          path: 'uncertain.clarify',
+          intent: 'knowledge',
+          confidence: 0.28,
+          uncertain: true,
+          awaiting: 'clarification',
+          steps: const [
+            DecisionStep(id: 'decide.uncertain', action: 'mark_uncertain', reason: '问句过短或缺少可判别的办事/知识线索，不能判断要走哪条路径。', evidence: []),
+            DecisionStep(id: 'guard.block_mutation', action: 'block_mutation', reason: '意图尚不明确，不能创建请假或奖助草稿。', evidence: []),
+          ],
+        ),
       );
     }
 
@@ -537,12 +591,13 @@ class DemoCampusApi implements CampusApi {
         lower.contains('假条') ||
         lower.contains('医院') ||
         lower.contains('病例') ||
-        lower.contains('销假')) {
+        lower.contains('销假') ||
+        lower.contains('短假')) {
       if (lower.contains('销假')) {
         return AskResult(
           conversationId: _id('conv'),
           intent: 'leave_return',
-          conclusion: '假期期满须在返校当日办理销假。若你有已批准的请假，可直接去确认返校。',
+          conclusion: '按当前审批规则，假期结束后须办理销假。若你有已批准的请假，可直接去确认返校。下列依据如出现，来自已导入的【模板示例】，不是学校正式校规。',
           citations: const [citeLeave2026Return],
           action: _leaves.values.any((l) => l.status == 'pending_return')
               ? AnswerAction(
@@ -554,23 +609,66 @@ class DemoCampusApi implements CampusApi {
           humanEntry: const HumanEntry(type: 'counselor', label: '问辅导员'),
         );
       }
-      return const AskResult(
+      final askingRule = (lower.contains('谁审批') || lower.contains('什么材料') || lower.contains('规定') || lower.contains('怎么销假'))
+          && !lower.contains('帮我请') && !lower.contains('请个假') && !lower.contains('我要请');
+      if (askingRule) {
+        return AskResult(
+          conversationId: 'conv_leave_rule',
+          intent: 'knowledge',
+          conclusion: '以下内容来自已导入的【模板示例】，不是任何学校的正式校规。【示例】短假是指不超过 1 个自然日且不跨天、且不影响已登记考试的请假，由辅导员审批。',
+          citations: const [citeLeave2026],
+          action: const AnswerAction(type: 'leave', label: '去请假'),
+          decision: demoDecision(
+            path: 'knowledge.retrieve',
+            intent: 'knowledge',
+            knowledgeScope: const ['leave'],
+            steps: const [
+              DecisionStep(id: 'extract_signals', action: 'extract_signals', reason: '请假词项出现在规定/审批类问句中，优先走知识检索。', evidence: ['短假', '谁审批']),
+              DecisionStep(id: 'decide.select', action: 'select_path', reason: '采用知识检索路径 knowledge.retrieve。', evidence: ['knowledge:0.72']),
+              DecisionStep(id: 'guard.no_invention', action: 'require_retrieval_evidence', reason: '结论只引用已导入的模板示例或校方文档，不编造条款。', evidence: ['leave']),
+            ],
+          ),
+        );
+      }
+      return AskResult(
         conversationId: 'conv_leave',
         intent: 'leave',
-        conclusion: '可以请假。不足一个自然日且不跨天、不影响已登记考试的，由辅导员审批；跨天或与考试/课堂冲突的须加签。材料不全会当场拦住。新旧规定不一致时，以《学生请假管理办法》2026学年秋季学期第十二条为准。',
-        citations: [citeLeave2026, citeLeave2025],
-        conflicts: [leaveConflict],
+        conclusion: '按当前审批规则，可以办理请假：不足一个自然日且不跨天、不影响已登记考试的，由辅导员审批；跨天或与考试/课堂冲突的须加签。材料不全会当场拦住。请核对后确认，系统不会代替你确认。下列依据如出现，来自已导入的【模板示例】，不是学校正式校规。',
+        citations: [citeLeave2026],
         action: AnswerAction(type: 'leave', label: '去请假'),
+        decision: demoDecision(
+          path: 'leave.draft_and_confirm',
+          intent: 'leave',
+          whyConfirm: whyLeaveConfirm,
+          awaiting: 'student_confirm',
+          knowledgeScope: const ['leave'],
+          steps: const [
+            DecisionStep(id: 'extract_signals', action: 'extract_signals', reason: '命中请假词项或办理措辞。', evidence: ['请假']),
+            DecisionStep(id: 'decide.select', action: 'select_path', reason: '采用请假路径 leave.draft_and_confirm。', evidence: ['leave:0.84']),
+            DecisionStep(id: 'guard.student_confirm', action: 'require_student_confirm', reason: whyLeaveConfirm, evidence: []),
+          ],
+        ),
       );
     }
 
     if (lower.contains('报到') || lower.contains('入学') || lower.contains('宿舍') || lower.contains('须知')) {
-      return const AskResult(
+      return AskResult(
         conversationId: 'conv_enroll',
         intent: 'registration',
-        conclusion: '新生须在 11 月 15 日前完成档案核对、宿舍床位确认，并阅读入学须知后确认。未完成的关键项会出现在待办里。',
-        citations: [citeEnroll],
+        conclusion: '已导入的【模板示例】报到入学须知存在冲突：同文件以较新生效学期为准，以【模板示例】报到入学须知-2025秋为准。【示例】新生须在报到当天 【示例】20:00 前到宿舍办理入住。该时间为模板示例，不是任何学校公布的正式截止时间。你也可以查看辅导员发布的报到任务。',
+        citations: [citeEnroll, citeEnrollOld],
+        conflicts: [enrollConflict],
         action: AnswerAction(type: 'task', label: '去看报到待办', ref: {'id': 'task_enroll_read'}),
+        decision: demoDecision(
+          path: 'registration.retrieve',
+          intent: 'registration',
+          knowledgeScope: const ['enrollment'],
+          steps: const [
+            DecisionStep(id: 'extract_signals', action: 'extract_signals', reason: '命中报到/入住及时间问句，走报到检索路径。', evidence: ['报到', '几点']),
+            DecisionStep(id: 'decide.select', action: 'select_path', reason: '采用 registration.retrieve。', evidence: ['registration:0.80']),
+            DecisionStep(id: 'guard.no_invention', action: 'require_retrieval_evidence', reason: '结论只引用已导入的模板示例或校方文档，不编造条款。', evidence: ['enrollment']),
+          ],
+        ),
       );
     }
 
@@ -580,6 +678,14 @@ class DemoCampusApi implements CampusApi {
         intent: 'knowledge',
         conclusion: '知识库中没有找到相关规定，无法判断能否在宿舍饲养宠物。系统不会编造条款。',
         humanEntry: const HumanEntry(type: 'counselor', label: '转给辅导员或宿舍管理窗口'),
+        decision: demoDecision(
+          path: 'knowledge.retrieve',
+          intent: 'knowledge',
+          confidence: 0.4,
+          steps: const [
+            DecisionStep(id: 'guard.no_invention', action: 'require_retrieval_evidence', reason: '未检索到相关片段，不编造条款。', evidence: []),
+          ],
+        ),
       );
     }
 
@@ -588,6 +694,14 @@ class DemoCampusApi implements CampusApi {
       intent: 'knowledge',
       conclusion: '知识库中没有找到与「$q」直接对应的规定，不能编造答案。你可以换一种问法，或转给辅导员。',
       humanEntry: const HumanEntry(type: 'counselor', label: '转给辅导员'),
+      decision: demoDecision(
+        path: 'knowledge.retrieve',
+        intent: 'knowledge',
+        confidence: 0.36,
+        steps: const [
+          DecisionStep(id: 'guard.no_invention', action: 'require_retrieval_evidence', reason: '未检索到相关片段，不编造条款。', evidence: []),
+        ],
+      ),
     );
   }
 
@@ -906,7 +1020,7 @@ class DemoCampusApi implements CampusApi {
       AidMatch(
         programId: 'aid_lizhi',
         title: '国家励志奖学金',
-        reason: '上一学年成绩位于本专业前 30%，且困难认定结果为通过。',
+        reason: '按当前项目条件：已授权成绩与困难认定符合该演示项目字段要求（不是校规引文）。',
         citations: [citeAid],
         dueAt: DateTime(2026, 12, 5),
       ),

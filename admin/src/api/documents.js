@@ -39,3 +39,19 @@ export function updateChunk(documentId, chunkId, payload) {
 export function saveChunks(documentId, chunks) {
   return http.put(`/admin/documents/${documentId}/chunks`, { chunks })
 }
+
+export function listDocumentTemplates() {
+  return http.get('/admin/document-templates')
+}
+
+export function downloadDocumentTemplate(id) {
+  return http.get(`/admin/document-templates/${id}/download`, { responseType: 'blob' })
+}
+
+export function importDocumentTemplate(id, replace = true) {
+  return http.post(`/admin/document-templates/${id}/import`, null, { params: { replace } })
+}
+
+export function importDocumentTemplateExamples(ids, replace = true) {
+  return http.post('/admin/document-templates/import-examples', { ids, replace })
+}

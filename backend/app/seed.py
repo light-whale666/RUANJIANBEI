@@ -1,4 +1,8 @@
-"""Demo data for one class: freshman + seniors, one counselor, two teachers, admin."""
+"""Demo data for one class: freshman + seniors, one counselor, two teachers, admin.
+
+The knowledge base is left empty on purpose. Official regulations are not seeded;
+schools upload their own files, or an admin imports clearly marked template examples.
+"""
 
 from __future__ import annotations
 
@@ -37,7 +41,6 @@ from app.security import hash_password
 from app.services.aids import recalculate_all_students
 from app.services.clock import now
 from app.services.crypto import encrypt_field
-from app.services.documents import apply_metadata
 from app.services.rules import seed_default_rules
 from app.services.todos import ensure_task_todos
 
@@ -88,46 +91,6 @@ def _wipe(db: Session) -> None:
 def _user(**kwargs) -> User:
     kwargs.setdefault("password_hash", demo_password_hash())
     return User(**kwargs)
-
-
-def _chunk(doc: Document, article: str, content: str, **kw) -> DocumentChunk:
-    roles = kw.pop("visible_roles", None)
-    if roles is None:
-        if doc.counselor_only:
-            roles = ["counselor"]
-        else:
-            try:
-                roles = json.loads(doc.applicable_roles or '["student","teacher","counselor"]')
-            except json.JSONDecodeError:
-                roles = ["student", "teacher", "counselor"]
-    return DocumentChunk(
-        document=doc,
-        article=article,
-        section=kw.pop("section", None),
-        content=content,
-        start_offset=0,
-        end_offset=len(content),
-        anchor=article,
-        visible_roles=json.dumps(roles, ensure_ascii=False),
-        **kw,
-    )
-
-
-def _doc(filename, semester, *, priority=False, counselor_only=False, family=None, roles=None) -> Document:
-    doc = Document(
-        filename=filename,
-        title=filename.replace(".pdf", ""),
-        semester=semester,
-        is_priority=priority,
-        counselor_only=counselor_only,
-        visibility="counselor_only" if counselor_only else "all",
-        family=family,
-        status="ready",
-        applicable_roles=json.dumps(roles or ["student", "teacher", "counselor"], ensure_ascii=False),
-        scope=json.dumps({"type": "all"}, ensure_ascii=False),
-    )
-    apply_metadata(doc, {"semester": semester, "filename": filename, "is_priority": priority, "counselor_only": counselor_only})
-    return doc
 
 
 def seed_demo(db: Session, *, reset: bool = False) -> None:
@@ -245,68 +208,13 @@ def seed_demo(db: Session, *, reset: bool = False) -> None:
         ref_type="aid",
     ))
 
-    # Documents
-    leave_doc = _doc("学生请假管理规定（2025-2026学年）.pdf", "2025-2026学年", priority=True, family="leave")
-    aid_doc = _doc("国家励志奖学金实施办法（2025-2026学年）.pdf", "2025-2026学年", priority=True, family="aid")
-    enroll_old = _doc("入学须知-2024秋.pdf", "2024-2025学年秋季", priority=False, family="enrollment")
-    enroll_new = _doc("入学须知-2025秋.pdf", "2025-2026学年秋季", priority=True, family="enrollment")
-    internal = _doc("辅导员工作手册（内部）.pdf", "2025-2026学年", counselor_only=True, family="counselor-manual")
-    db.add_all([leave_doc, aid_doc, enroll_old, enroll_new, internal])
-    db.flush()
-
-    db.add_all([
-        _chunk(leave_doc, "第一条", "本规定适用于全体在校学生。学生请假须通过校园办事助手提交，经审批通过后方可离校。", keywords="请假 适用范围"),
-        _chunk(leave_doc, "第三条", "短假是指不超过 1 个自然日且不跨天、且不影响已登记考试的请假，由辅导员审批。", keywords="短假 辅导员 一天 不跨天"),
-        _chunk(leave_doc, "第四条", "跨天请假，或与已登记考试、课堂冲突的请假，须在辅导员审批基础上加签：冲突本课的由任课教师加签；无年级负责人时由辅导员终审并备案。", keywords="跨天 加签 考试 冲突 备案"),
-        _chunk(leave_doc, "第五条", "跨天病假须提供病例或诊断证明。材料不全不得出具请假单。", keywords="病假 病例 诊断证明 跨天 材料"),
-        _chunk(leave_doc, "第六条", "批准后学生须在假期结束返校并办理销假。", keywords="销假 返校"),
-        _chunk(leave_doc, "第七条", "假条、病例等材料自证明载明日期起有效，未载明日期的默认有效期为 7 天，有效期内可申请复用，仍须经学生确认。", keywords="材料 复用 有效期 7天"),
-        _chunk(aid_doc, "第二条", "国家励志奖学金的奖励对象为二年级及以上全日制本专科学生。", keywords="励志奖学金 二年级"),
-        _chunk(aid_doc, "第三条", "申请学生学习成绩优秀，平均学分绩点（GPA）不低于 3.0。", keywords="GPA 成绩 3.0"),
-        _chunk(aid_doc, "第四条", "申请学生须通过家庭经济困难认定。", keywords="困难认定 家庭经济"),
-        _chunk(aid_doc, "第五条", "符合条件者可提出申请，由学生本人确认后报送，系统不做自动提交。", keywords="不自动提交 确认"),
-        _chunk(
-            enroll_old,
-            "第三条",
-            "新生须在报到当天 17:00 前到宿舍办理入住。",
-            keywords="报到 入住 宿舍 17:00",
-            conflict_group="dorm_checkin_deadline",
-        ),
-        _chunk(
-            enroll_new,
-            "第三条",
-            "新生须在报到当天 20:00 前到宿舍办理入住。",
-            keywords="报到 入住 宿舍 20:00",
-            conflict_group="dorm_checkin_deadline",
-        ),
-        _chunk(
-            internal,
-            "第十二条",
-            "困难认定内部掌握口径：已获校级临时困难补助但尚未完成认定归档的，辅导员可按内部口径先行掌握，不得向学生原文转述本条。",
-            keywords="困难认定 内部口径",
-            visible_roles=["counselor"],
-        ),
-    ])
-    db.flush()
-
-
-    # Cite aid articles on the program
-    def cite(doc, article, quote):
-        ch = db.query(DocumentChunk).filter(DocumentChunk.document_id == doc.id, DocumentChunk.article == article).first()
-        return {
-            "document_id": doc.id,
-            "chunk_id": ch.id if ch else None,
-            "filename": doc.filename,
-            "article": article,
-            "semester": doc.semester,
-            "quote": quote,
-            "is_governing": True,
-            "section": None,
-        }
+    # Knowledge base stays empty until the school uploads documents or an
+    # administrator imports clearly marked 【模板示例】 files. Seed must not
+    # pretend to ship official regulations.
 
     program = AidProgram(
         name="国家励志奖学金",
-        document_id=aid_doc.id,
+        document_id=None,
         semester="2025-2026学年",
         deadline=now() + timedelta(days=30),
         expired=False,
@@ -318,25 +226,22 @@ def seed_demo(db: Session, *, reset: bool = False) -> None:
                     "field": "grade_year",
                     "op": "gte",
                     "value": 2,
-                    "reason": "二年级及以上全日制本专科学生",
-                    "fail": "奖励对象为二年级及以上学生",
-                    "citation": cite(aid_doc, "第二条", "奖励对象为二年级及以上全日制本专科学生。"),
+                    "reason": "年级达到二年级及以上",
+                    "fail": "年级未达到二年级及以上",
                 },
                 {
                     "field": "gpa",
                     "op": "gte",
                     "value": 3.0,
-                    "reason": "GPA 不低于 3.0",
-                    "fail": "平均学分绩点未达到 3.0",
-                    "citation": cite(aid_doc, "第三条", "平均学分绩点（GPA）不低于 3.0。"),
+                    "reason": "已授权成绩显示 GPA 不低于 3.0",
+                    "fail": "已授权成绩显示 GPA 未达到 3.0",
                 },
                 {
                     "field": "hardship_status",
                     "op": "eq",
                     "value": True,
-                    "reason": "已通过家庭经济困难认定",
-                    "fail": "尚未通过家庭经济困难认定",
-                    "citation": cite(aid_doc, "第四条", "申请学生须通过家庭经济困难认定。"),
+                    "reason": "已授权档案显示通过家庭经济困难认定",
+                    "fail": "已授权档案显示尚未通过家庭经济困难认定",
                 },
             ]
         }, ensure_ascii=False),
@@ -363,7 +268,6 @@ def seed_demo(db: Session, *, reset: bool = False) -> None:
         creator_id=counselor.id,
         audience=json.dumps({"classes": ["软工2601"]}, ensure_ascii=False),
         submit_mode="confirm",
-        citations=json.dumps([cite(enroll_new, "第三条", "新生须在报到当天 20:00 前到宿舍办理入住。")], ensure_ascii=False),
     )
     enroll2 = Task(
         type="registration",
@@ -398,8 +302,7 @@ def seed_demo(db: Session, *, reset: bool = False) -> None:
                 "field": "grade_year",
                 "op": "gte",
                 "value": 2,
-                "message": "本活动面向二年级及以上学生",
-                "citation": cite(aid_doc, "第二条", "二年级及以上学生方可参加本演示招募条件示例。"),
+                "message": "本活动面向二年级及以上学生（按任务条件，不是校规引文）",
             }
         ], ensure_ascii=False),
     )

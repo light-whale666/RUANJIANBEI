@@ -83,6 +83,11 @@ class _AskResultScreenState extends State<AskResultScreen> {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
           Text(widget.question, style: const TextStyle(color: AppColors.muted, height: 1.4)),
+          if (r.decision != null) ...[
+            const SizedBox(height: 16),
+            const SectionTitle('决策过程'),
+            DecisionPanel(decision: r.decision!),
+          ],
           const SizedBox(height: 16),
           const SectionTitle('结论'),
           SoftCard(
@@ -202,6 +207,111 @@ class ConclusionView extends StatelessWidget {
     if (spans.isEmpty) spans.add(TextSpan(text: text));
     return Text.rich(
       TextSpan(style: const TextStyle(fontSize: 16, height: 1.55, color: AppColors.ink, fontWeight: FontWeight.w600), children: spans),
+    );
+  }
+}
+
+
+class DecisionPanel extends StatelessWidget {
+  const DecisionPanel({super.key, required this.decision});
+
+  final DecisionTrace decision;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = decision;
+    final confidencePct = (d.confidence * 100).clamp(0, 100).toStringAsFixed(0);
+    return SoftCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _chip('路径', d.path),
+              _chip('意图', d.intent ?? '—'),
+              _chip('依据', d.sourceLabel),
+              _chip('信心度', '$confidencePct%'),
+              if (d.uncertain) _chip('状态', '不确定，已停下', warning: true),
+              if (d.awaiting != null && d.awaiting!.isNotEmpty) _chip('等待', d.awaitingLabel),
+            ],
+          ),
+          if (d.knowledgeScope.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text('检索范围：${d.knowledgeScope.join('、')}', style: const TextStyle(color: AppColors.muted, height: 1.4)),
+          ],
+          if (d.whyConfirm != null && d.whyConfirm!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.warningSoft,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text('为何要确认：${d.whyConfirm}', style: const TextStyle(height: 1.5, color: AppColors.ink)),
+            ),
+          ],
+          if (d.prefill.skippedUnauthorized.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text('未授权、未预填：${d.prefill.skippedUnauthorized.join('、')}', style: const TextStyle(color: AppColors.muted, height: 1.4)),
+          ],
+          if (d.steps.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text('步骤', style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            for (var i = 0; i < d.steps.length; i++) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 22,
+                      child: Text('${i + 1}.', style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700)),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(d.steps[i].reason, style: const TextStyle(height: 1.45)),
+                          if (d.steps[i].evidence.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                d.steps[i].evidence.take(6).join('  ·  '),
+                                style: const TextStyle(color: AppColors.muted, fontSize: 12, height: 1.4),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(String label, String value, {bool warning = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: warning ? AppColors.warningSoft : AppColors.tealSoft,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$label：$value',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: warning ? AppColors.warning : AppColors.tealDark,
+        ),
+      ),
     );
   }
 }

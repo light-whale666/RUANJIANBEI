@@ -5,6 +5,7 @@ import io
 import json
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -13,6 +14,14 @@ from app.config import get_settings
 from app.db import get_db
 from app.deps import require_admin
 from app.errors import AppError
+from app.knowledge_templates.catalog import (
+    WATERMARK,
+    catalog_payload,
+    get_template,
+    import_examples,
+    import_template_example,
+    read_template_bytes,
+)
 from app.models import AuditLog, Document, DocumentChunk, User
 from app.security import hash_password
 from app.seed import DEMO_PASSWORD, reset_and_seed
@@ -114,6 +123,11 @@ class ChunkPatch(BaseModel):
 
 class ResetIn(BaseModel):
     confirm: bool = False
+
+
+class ImportExamplesIn(BaseModel):
+    ids: list[str] | None = None
+    replace: bool = True
 
 
 class RulesIn(BaseModel):
@@ -297,6 +311,79 @@ async def import_users(file: UploadFile = File(...), _admin: User = Depends(requ
             user.counselor_id = c.id
     db.commit()
     return {"created": created, "updated": updated, "errors": errors}
+
+
+
+@router.get("/document-templates")
+def list_document_templates(_admin: User = Depends(require_admin)):
+    return {
+        "items": catalog_payload(),
+        "watermark": WATERMARK,
+        "note": "空模板供校方下载填写后上传。导入模板示例仅用于演示检索，文件名带【模板示例】，不是任何学校的正式校规。知识库默认空，未导入前问答不会编造条款。",
+    }
+
+
+@router.get("/document-templates/{template_id}/download")
+def download_document_template(template_id: str, _admin: User = Depends(require_admin)):
+    if get_template(template_id) is None:
+        raise AppError(404, "not_found", "模板不存在")
+    try:
+        data, filename, media = read_template_bytes(template_id)
+    except KeyError:
+        raise AppError(404, "not_found", "模板不存在") from None
+    # RFC 5987 filename for Chinese names
+    from urllib.parse import quote
+
+    encoded = quote(filename)
+    return Response(
+        content=data,
+        media_type=media,
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded}"},
+    )
+
+
+@router.post("/document-templates/import-examples")
+def import_document_template_examples(
+    body: ImportExamplesIn | None = None,
+    _admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    body = body or ImportExamplesIn()
+    try:
+        docs = import_examples(db, body.ids, replace=body.replace)
+    except KeyError as exc:
+        raise AppError(404, "not_found", f"模板不存在：{exc}") from exc
+    db.commit()
+    items = []
+    for doc in docs:
+        count = db.query(DocumentChunk).filter(DocumentChunk.document_id == doc.id).count()
+        items.append(serialize_document(doc, count))
+    return {
+        "items": items,
+        "message": "已导入模板示例。文件名与标题带【模板示例】字样，仅用于演示检索，不是任何学校的正式校规。",
+    }
+
+
+@router.post("/document-templates/{template_id}/import")
+def import_one_document_template(
+    template_id: str,
+    replace: bool = True,
+    _admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    if get_template(template_id) is None:
+        raise AppError(404, "not_found", "模板不存在")
+    try:
+        doc = import_template_example(db, template_id, replace=replace)
+    except KeyError:
+        raise AppError(404, "not_found", "该模板没有可导入的示例") from None
+    db.commit()
+    db.refresh(doc)
+    count = db.query(DocumentChunk).filter(DocumentChunk.document_id == doc.id).count()
+    payload = serialize_document(doc, count)
+    payload["document_id"] = doc.id
+    payload["message"] = "已导入模板示例，文件名带【模板示例】，不是学校正式校规。"
+    return payload
 
 
 @router.get("/documents")

@@ -46,11 +46,23 @@
       permission_denied: bool              # true 时只提示需辅导员查看，citations 为空
     },
     slots_needed: [{field, question}] | []
+    decision: {                 # 可演示的总管决策过程（第一版新增，其余字段保持兼容）
+      path,                     # 如 leave.draft_and_confirm / knowledge.retrieve / aid.preview / registration.retrieve / uncertain.clarify
+      intent,                   # knowledge | leave | aid | registration | certificate | volunteer | homework
+      confidence,               # 0-1
+      uncertain,                # bool；为 true 时不创建请假/奖助草稿，也不改学生数据
+      source,                   # rules | llm（无 LLM_API_KEY 时为 rules）
+      steps: [{id, action, reason, evidence[]}],   # 抽取信号、对候选意图评分、防护规则等
+      why_confirm,              # 为何要等人确认；不需要时为 null
+      awaiting,                 # student_confirm | teacher_approval | clarification | null
+      knowledge_scope,          # 如 ["leave"] / ["aid"] / ["enrollment"] / []
+      prefill: {used: [...], skipped_unauthorized: [...]}
+    }
   }
   ```
 - `GET /api/v1/documents/{id}/chunks/{chunk_id}` 原文片段（供高亮）；无权限 403，不打码返回正文
 
-总管只做理解、补全、分流、汇总。知识智能体检索（带身份过滤）。校验智能体走规则引擎。办事智能体在校验通过后才出草稿/单据。无 LLM Key 时：意图用规则+关键词，结论用检索片段抽取，禁止模型臆造条款。有 Key 时：模型只允许基于检索片段综述，每句结论可带 citation 角标。
+总管只做理解、补全、分流、汇总。决策走可插拔 `DecisionModel`：有 `LLM_API_KEY` 时用大模型输出结构化路由，失败或无 Key 时用可说明依据的规则评分（抽取信号→给候选意图打分并写理由→头名相近或低于阈值则判为不确定）。任何模型提议都要经过同一套防护规则：改学生数据必须 `awaiting=student_confirm`，审批必须等教师/辅导员，不确定时不改数据，无检索依据不编造条款，未授权字段不预填。知识智能体检索（带身份过滤）。校验智能体走规则引擎。办事智能体在校验通过后才出草稿/单据；系统不代替学生确认或教师审批。结论用检索片段，禁止模型臆造条款。知识库默认空，须由校方上传文档或管理端导入带【模板示例】字样的模板示例后才能被引用。
 
 ### 待办与提醒
 - `GET /api/v1/todos?status=` 首页待办（作业、报到、招募、请假确认/销假、奖助提醒、补件）。新生待办顶部可含 `group=enrollment`
@@ -86,10 +98,14 @@
 
 ### 管理端
 - 用户/名单导入
-- 规章入库（文件名、生效学期、适用角色、范围、是否优先文件）与切块校对
+- 规章入库（文件名、生效学期、适用角色、范围、是否优先文件）与切块校对。仓库不预置任何学校正文；管理端提供空模板与导入入口，校方上传自己的文档后才能被检索和引用。
 - 审批规则阈值
-- 演示数据重置（仅演示环境）
+- 演示数据重置（仅演示环境）。重置后知识库仍为空，不会重新写入装成正式校规的条文。
 - `GET /api/v1/admin/rules` `PUT /api/v1/admin/rules`
+- `GET /api/v1/admin/document-templates` 列出空模板（规章/奖助办法/报到须知/办事流程/辅导员内部手册）。每项含 id、name、filename、description、counselor_only，以及是否可导入模板示例。正文均带水印「【模板】请替换为学校正式文件，本文不是任何学校的正式校规」。
+- `GET /api/v1/admin/document-templates/{id}/download` 下载对应空模板文件（占位符为【请填写…】）。
+- `POST /api/v1/admin/document-templates/{id}/import` 导入该模板的【模板示例】（可选，仅用于演示检索）。写入的 title/文件名必须带【模板示例】，不得冒充正式校规。
+- `POST /api/v1/admin/document-templates/import-examples` `{ids?: string[], replace?: bool}` 批量导入模板示例。默认包含请假、奖助、两个学期的报到须知（用于冲突裁决，时间为【示例】17:00 / 【示例】20:00）以及辅导员内部手册示例。
 
 ## 数据模型（核心表）
 

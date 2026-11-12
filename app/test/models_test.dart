@@ -12,9 +12,9 @@ void main() {
           {
             'document_id': 'd1',
             'chunk_id': 'k1',
-            'filename': '学生请假管理办法',
-            'article': '第十二条',
-            'semester': '2026学年秋季学期',
+            'filename': '【模板示例】学生请假管理规定',
+            'article': '第二条 【示例】短假',
+            'semester': '【示例】2025-2026学年',
             'is_governing': true,
           }
         ],
@@ -23,12 +23,32 @@ void main() {
         ],
         'action': {'type': 'leave', 'label': '去请假'},
         'permission_denied': false,
+      },
+      'decision': {
+        'path': 'leave.draft_and_confirm',
+        'intent': 'leave',
+        'confidence': 0.84,
+        'uncertain': false,
+        'source': 'rules',
+        'steps': [
+          {'id': 'decide.select', 'action': 'select_path', 'reason': '采用请假路径', 'evidence': ['leave:0.84']}
+        ],
+        'why_confirm': '必须由学生本人确认',
+        'awaiting': 'student_confirm',
+        'knowledge_scope': ['leave'],
+        'prefill': {'used': ['name'], 'skipped_unauthorized': []}
       }
     });
     expect(result.conclusion, '可以请假');
     expect(result.citations.single.isGoverning, isTrue);
+    expect(result.citations.single.filename, contains('【模板示例】'));
     expect(result.conflicts.single.chosen, contains('新办法'));
     expect(result.action?.type, 'leave');
+    expect(result.decision?.path, 'leave.draft_and_confirm');
+    expect(result.decision?.source, 'rules');
+    expect(result.decision?.awaiting, 'student_confirm');
+    expect(result.decision?.whyConfirm, contains('学生本人确认'));
+    expect(result.decision?.steps.single.reason, contains('请假路径'));
   });
 
   test('无权限回答不携带正文依据', () {

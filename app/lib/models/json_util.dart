@@ -69,3 +69,11 @@ dynamic firstNonNull(Map<String, dynamic> m, List<String> keys) {
   }
   return null;
 }
+
+
+List<String> asStringList(dynamic v) {
+  return asList(v)
+      .map((e) => asStringD(e))
+      .where((e) => e.isNotEmpty)
+      .toList();
+}

@@ -1,133 +1,154 @@
 import '../models/models.dart';
 
+const _watermark = '【模板】请替换为学校正式文件，本文不是任何学校的正式校规。';
+
 const citeLeave2026 = Citation(
-  documentId: 'doc_leave_2026',
-  chunkId: 'c_leave_12',
-  filename: '学生请假管理办法',
-  section: '第三章 审批权限',
-  article: '第十二条',
-  semester: '2026学年秋季学期',
+  documentId: 'doc_leave_example',
+  chunkId: 'c_leave_2',
+  filename: '【模板示例】学生请假管理规定',
+  section: '第二条',
+  article: '第二条 【示例】短假',
+  semester: '【示例】2025-2026学年',
   quote:
-      '学生因病、因事请假，不足一个自然日且不跨天、不影响已登记考试的，由辅导员（班主任）审批。跨天或与已登记考试、课堂冲突的，须按本办法加签。',
+      '$_watermark【示例】短假是指不超过 1 个自然日且不跨天、且不影响已登记考试的请假，由辅导员审批。本句为模板示例，用于演示检索，不是任何学校的正式校规。',
   isGoverning: true,
 );
 
 const citeLeave2026Return = Citation(
-  documentId: 'doc_leave_2026',
-  chunkId: 'c_leave_18',
-  filename: '学生请假管理办法',
-  section: '第四章 销假',
-  article: '第十八条',
-  semester: '2026学年秋季学期',
-  quote: '假期期满，学生须在返校当日办理销假。逾期未销假的，按旷课或擅自离校处理。',
+  documentId: 'doc_leave_example',
+  chunkId: 'c_leave_5',
+  filename: '【模板示例】学生请假管理规定',
+  section: '第五条',
+  article: '第五条 【示例】销假',
+  semester: '【示例】2025-2026学年',
+  quote: '$_watermark【示例】批准后学生须在假期结束返校并办理销假。本句为模板示例，不是任何学校的正式校规。',
   isGoverning: true,
 );
 
 const citeLeave2025 = Citation(
-  documentId: 'doc_leave_2025',
-  chunkId: 'c_leave_old_8',
-  filename: '学生请假管理暂行办法',
-  section: '第二章',
-  article: '第八条',
-  semester: '2025学年春季学期',
-  quote: '请假一天以内由班主任审批；超过一天须学院办公室加盖公章。',
+  documentId: 'doc_leave_example_old',
+  chunkId: 'c_leave_old_2',
+  filename: '【模板示例】学生请假管理规定（较旧学期）',
+  section: '第二条',
+  article: '第二条 【示例】短假',
+  semester: '【示例】2024-2025学年',
+  quote: '$_watermark【示例】本条为较旧学期模板示例，仅作对照，不以本稿为准。',
   isGoverning: false,
 );
 
 const citeAid = Citation(
-  documentId: 'doc_aid_2026',
-  chunkId: 'c_aid_4',
-  filename: '本科生国家励志奖学金评审办法',
-  section: '第二章 申请条件',
-  article: '第四条',
-  semester: '2026学年秋季学期',
-  quote: '申请国家励志奖学金的学生，应当品学兼优，家庭经济困难，上一学年学习成绩排名位于本专业前30%，且通过家庭经济困难认定。',
+  documentId: 'doc_aid_example',
+  chunkId: 'c_aid_2',
+  filename: '【模板示例】奖助学金实施办法',
+  section: '第二条',
+  article: '第二条 【示例】学业条件',
+  semester: '【示例】2025-2026学年',
+  quote: '$_watermark【示例】申请学生学习成绩优秀，平均学分绩点（GPA）不低于 3.0。本句为模板示例，用于演示检索，不是任何学校的正式校规。',
   isGoverning: true,
 );
 
 const citeEnroll = Citation(
-  documentId: 'doc_enroll_2026',
+  documentId: 'doc_enroll_2025_example',
   chunkId: 'c_enroll_3',
-  filename: '2026级新生入学须知',
-  section: '一、报到安排',
-  article: '第3条',
-  semester: '2026学年秋季学期',
-  quote: '新生须在报到截止日前完成个人档案核对、宿舍床位确认，并阅读本须知后签字确认。未完成关键报到项的，由辅导员跟进。',
+  filename: '【模板示例】报到入学须知-2025秋',
+  section: '第三条',
+  article: '第三条 【示例】宿舍入住',
+  semester: '【示例】2025-2026学年秋季',
+  quote: '$_watermark【示例】新生须在报到当天 【示例】20:00 前到宿舍办理入住。该时间为模板示例，不是任何学校公布的正式截止时间。',
   isGoverning: true,
 );
 
-const leaveConflict = ConflictNote(
-  chosen: '以《学生请假管理办法》2026学年秋季学期第十二条为准',
-  other: '《学生请假管理暂行办法》2025学年春季学期第八条（已搁置）',
-  reason: '同主题以较新生效学期为准，且后台已将2026年版标记为优先文件。',
+const citeEnrollOld = Citation(
+  documentId: 'doc_enroll_2024_example',
+  chunkId: 'c_enroll_3_old',
+  filename: '【模板示例】报到入学须知-2024秋',
+  section: '第三条',
+  article: '第三条 【示例】宿舍入住',
+  semester: '【示例】2024-2025学年秋季',
+  quote: '$_watermark【示例】新生须在报到当天 【示例】17:00 前到宿舍办理入住。该时间为模板示例，用于演示冲突裁决，不是任何学校公布的正式截止时间。',
+  isGoverning: false,
 );
 
+const leaveConflict = ConflictNote(
+  chosen: '以【模板示例】报到入学须知-2025秋（【示例】2025-2026学年秋季）为准',
+  other: '【模板示例】报到入学须知-2024秋（【示例】2024-2025学年秋季）',
+  reason: '同文件以较新生效学期为准。两条均为模板示例时间（【示例】20:00 与【示例】17:00），不是任何学校的正式校规。',
+);
+
+const enrollConflict = leaveConflict;
+
 const chunkTexts = <String, DocumentChunk>{
-  'doc_leave_2026::c_leave_12': DocumentChunk(
-    documentId: 'doc_leave_2026',
-    chunkId: 'c_leave_12',
-    filename: '学生请假管理办法',
-    section: '第三章 审批权限',
-    article: '第十二条',
-    semester: '2026学年秋季学期',
-    highlight:
-        '不足一个自然日且不跨天、不影响已登记考试的，由辅导员（班主任）审批。跨天或与已登记考试、课堂冲突的，须按本办法加签。',
+  'doc_leave_example::c_leave_2': DocumentChunk(
+    documentId: 'doc_leave_example',
+    chunkId: 'c_leave_2',
+    filename: '【模板示例】学生请假管理规定',
+    section: '第二条',
+    article: '第二条 【示例】短假',
+    semester: '【示例】2025-2026学年',
+    highlight: '【示例】短假是指不超过 1 个自然日且不跨天、且不影响已登记考试的请假，由辅导员审批。',
     text:
-        '第十二条 学生因病、因事请假，不足一个自然日且不跨天、不影响已登记考试的，由辅导员（班主任）审批。跨天或与已登记考试、课堂冲突的，须按本办法加签。\n\n'
-        '与本课考试冲突的，加签任课教师；无课表冲突但跨天的，由辅导员审批，并报年级负责人备案；名单中无年级负责人的，由辅导员终审并备案。\n\n'
-        '请假应当提交相应证明材料。跨天病假须提供病例或诊断证明。材料不全的，不得进入审批。',
+        '$_watermark\n【模板示例】下列条款仅用于演示检索，不是任何学校的正式校规。\n\n'
+        '第二条 【示例】短假\n【示例】短假是指不超过 1 个自然日且不跨天、且不影响已登记考试的请假，由辅导员审批。本句为模板示例，用于演示检索。',
   ),
-  'doc_leave_2026::c_leave_18': DocumentChunk(
-    documentId: 'doc_leave_2026',
-    chunkId: 'c_leave_18',
-    filename: '学生请假管理办法',
-    section: '第四章 销假',
-    article: '第十八条',
-    semester: '2026学年秋季学期',
-    highlight: '假期期满，学生须在返校当日办理销假。',
+  'doc_leave_example::c_leave_5': DocumentChunk(
+    documentId: 'doc_leave_example',
+    chunkId: 'c_leave_5',
+    filename: '【模板示例】学生请假管理规定',
+    section: '第五条',
+    article: '第五条 【示例】销假',
+    semester: '【示例】2025-2026学年',
+    highlight: '【示例】批准后学生须在假期结束返校并办理销假。',
     text:
-        '第十八条 假期期满，学生须在返校当日办理销假。逾期未销假的，按旷课或擅自离校处理。\n\n'
-        '销假由学生本人确认返校时间，辅导员予以登记。',
+        '$_watermark\n\n第五条 【示例】销假\n【示例】批准后学生须在假期结束返校并办理销假。本句为模板示例。',
   ),
-  'doc_leave_2025::c_leave_old_8': DocumentChunk(
-    documentId: 'doc_leave_2025',
-    chunkId: 'c_leave_old_8',
-    filename: '学生请假管理暂行办法',
-    section: '第二章',
-    article: '第八条',
-    semester: '2025学年春季学期',
-    highlight: '请假一天以内由班主任审批；超过一天须学院办公室加盖公章。',
+  'doc_leave_example_old::c_leave_old_2': DocumentChunk(
+    documentId: 'doc_leave_example_old',
+    chunkId: 'c_leave_old_2',
+    filename: '【模板示例】学生请假管理规定（较旧学期）',
+    section: '第二条',
+    article: '第二条 【示例】短假',
+    semester: '【示例】2024-2025学年',
+    highlight: '【示例】本条为较旧学期模板示例，仅作对照，不以本稿为准。',
     text:
-        '第八条 请假一天以内由班主任审批；超过一天须学院办公室加盖公章。\n\n'
-        '（本办法已被 2026 年秋季学期新颁布的《学生请假管理办法》取代，仅作对照，不以本稿为准。）',
+        '$_watermark\n\n第二条 【示例】短假\n【示例】本条为较旧学期模板示例，仅作对照，不以本稿为准。',
   ),
-  'doc_aid_2026::c_aid_4': DocumentChunk(
-    documentId: 'doc_aid_2026',
-    chunkId: 'c_aid_4',
-    filename: '本科生国家励志奖学金评审办法',
-    section: '第二章 申请条件',
-    article: '第四条',
-    semester: '2026学年秋季学期',
-    highlight: '上一学年学习成绩排名位于本专业前30%，且通过家庭经济困难认定。',
+  'doc_aid_example::c_aid_2': DocumentChunk(
+    documentId: 'doc_aid_example',
+    chunkId: 'c_aid_2',
+    filename: '【模板示例】奖助学金实施办法',
+    section: '第二条',
+    article: '第二条 【示例】学业条件',
+    semester: '【示例】2025-2026学年',
+    highlight: '【示例】平均学分绩点（GPA）不低于 3.0。',
     text:
-        '第四条 申请国家励志奖学金的学生，应当品学兼优，家庭经济困难，上一学年学习成绩排名位于本专业前30%，且通过家庭经济困难认定。\n\n'
-        '符合条件的学生由学校组织申报，不代替学生提交申请。材料应当真实完整。',
+        '$_watermark\n【模板示例】下列条款仅用于演示检索，不是任何学校的正式校规。\n\n'
+        '第二条 【示例】学业条件\n【示例】申请学生学习成绩优秀，平均学分绩点（GPA）不低于 3.0。本句为模板示例，用于演示检索。',
   ),
-  'doc_enroll_2026::c_enroll_3': DocumentChunk(
-    documentId: 'doc_enroll_2026',
+  'doc_enroll_2025_example::c_enroll_3': DocumentChunk(
+    documentId: 'doc_enroll_2025_example',
     chunkId: 'c_enroll_3',
-    filename: '2026级新生入学须知',
-    section: '一、报到安排',
-    article: '第3条',
-    semester: '2026学年秋季学期',
-    highlight: '新生须在报到截止日前完成个人档案核对、宿舍床位确认，并阅读本须知后签字确认。',
+    filename: '【模板示例】报到入学须知-2025秋',
+    section: '第三条',
+    article: '第三条 【示例】宿舍入住',
+    semester: '【示例】2025-2026学年秋季',
+    highlight: '【示例】新生须在报到当天 【示例】20:00 前到宿舍办理入住。',
     text:
-        '第3条 新生须在报到截止日前完成个人档案核对、宿舍床位确认，并阅读本须知后签字确认。未完成关键报到项的，由辅导员跟进。\n\n'
-        '报到截止日期为 2026 年 11 月 15 日。',
+        '$_watermark\n【模板示例】下列条款仅用于演示检索与冲突裁决，不是任何学校的正式校规。\n\n'
+        '第三条 【示例】宿舍入住\n【示例】新生须在报到当天 【示例】20:00 前到宿舍办理入住。该时间为模板示例，不是任何学校公布的正式截止时间。',
+  ),
+  'doc_enroll_2024_example::c_enroll_3_old': DocumentChunk(
+    documentId: 'doc_enroll_2024_example',
+    chunkId: 'c_enroll_3_old',
+    filename: '【模板示例】报到入学须知-2024秋',
+    section: '第三条',
+    article: '第三条 【示例】宿舍入住',
+    semester: '【示例】2024-2025学年秋季',
+    highlight: '【示例】新生须在报到当天 【示例】17:00 前到宿舍办理入住。',
+    text:
+        '$_watermark\n【模板示例】下列条款仅用于演示检索与冲突裁决，不是任何学校的正式校规。\n\n'
+        '第三条 【示例】宿舍入住\n【示例】新生须在报到当天 【示例】17:00 前到宿舍办理入住。该时间为模板示例，用于演示冲突裁决，不是任何学校公布的正式截止时间。',
   ),
 };
-
-const internalChunkKey = 'doc_internal::c_hardship_2';
 
 User freshmanUser() => const User(
       id: 'stu_chen',
@@ -222,3 +243,34 @@ Profile counselorProfile() => const Profile(
       phone: '18600000007',
       email: 'wangyc@campus.edu',
     );
+
+
+DecisionTrace demoDecision({
+  required String path,
+  required String intent,
+  double confidence = 0.82,
+  bool uncertain = false,
+  String source = 'rules',
+  List<DecisionStep> steps = const [],
+  String? whyConfirm,
+  String? awaiting,
+  List<String> knowledgeScope = const [],
+  List<String> used = const [],
+  List<String> skipped = const [],
+}) {
+  return DecisionTrace(
+    path: path,
+    intent: intent,
+    confidence: confidence,
+    uncertain: uncertain,
+    source: source,
+    steps: steps,
+    whyConfirm: whyConfirm,
+    awaiting: awaiting,
+    knowledgeScope: knowledgeScope,
+    prefill: PrefillTrace(used: used, skippedUnauthorized: skipped),
+  );
+}
+
+const whyLeaveConfirm = '生成或提交请假草稿会改动学生办事数据，必须由学生本人核对并确认，系统不会代替确认，也不会自动提交。';
+const whyAidConfirm = '奖助预审或生成草稿会使用学生档案并可能改动申请数据，必须由学生本人确认，系统不会自动提交。';
