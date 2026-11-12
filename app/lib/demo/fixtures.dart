@@ -150,6 +150,8 @@ const chunkTexts = <String, DocumentChunk>{
   ),
 };
 
+const internalChunkKey = 'doc_internal::c_hardship_2';
+
 User freshmanUser() => const User(
       id: 'stu_chen',
       username: '2026210101',
